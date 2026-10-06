@@ -232,8 +232,14 @@
 
           <div class="deck-slider-group">
             <div class="slider-top-labels">
-              <span>Durasi Hujan (Fleksibel)</span>
-              <span id="currentDurLabel" style="font-weight:600;color:var(--water-deep);">1,0 Jam — Gambar 1</span>
+              <span class="slider-title-label">Durasi Hujan</span>
+              <div class="manual-time-input-group">
+                <span class="manual-label">Atur Manual:</span>
+                <input type="number" id="inputCustomMinutes" class="manual-input" min="0" max="240" step="1" value="60" aria-label="Durasi hujan dalam menit" />
+                <span class="manual-unit">mnt</span>
+                <button id="btnSetCustom" class="manual-btn" type="button">Set</button>
+              </div>
+              <span id="currentDurLabel" class="slider-status-badge">1,0 Jam — Gambar 1</span>
             </div>
             <input type="range" class="time-range" id="timeSlider" min="0" max="4" step="0.05" value="1" />
             <div class="duration-presets" id="durationPresets">
@@ -244,20 +250,6 @@
               <button class="dur-preset" data-hours="1.5">1,5 jam</button>
               <button class="dur-preset" data-hours="2">2 jam</button>
               <button class="dur-preset" data-hours="3">3 jam</button>
-              <div class="custom-dur-box" title="Ketik durasi hujan manual (0–240 menit)">
-                <span class="custom-dur-label">Kustom:</span>
-                <input type="number" id="inputCustomMinutes" class="custom-dur-input" min="0" max="240" step="1" value="60" />
-                <span class="custom-dur-unit">mnt</span>
-                <button id="btnSetCustom" class="custom-dur-btn">Set</button>
-              </div>
-            </div>
-            <div class="timeline-ticks">
-              <span class="tick" data-hours="0">0.0j (Awal)</span>
-              <span class="tick active-tick" data-hours="1">1.0j (Gbr 1)</span>
-              <span class="tick" data-hours="1.5">1.5j (Gbr 2)</span>
-              <span class="tick" data-hours="2">2.0j (Gbr 3)</span>
-              <span class="tick" data-hours="2.5">2.5j (Gbr 4)</span>
-              <span class="tick" data-hours="3">3.0j (Gbr 5)</span>
             </div>
           </div>
         </div>
