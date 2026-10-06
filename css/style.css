@@ -1284,6 +1284,66 @@ input:checked + .slider-sw:before {
   margin-top: 2px;
 }
 
+/* Custom Duration Manual Input (Ketik durasi sendiri) */
+.custom-dur-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px dashed var(--border-medium);
+  border-radius: 3px;
+  padding: 2px 6px;
+  margin-left: 6px;
+}
+
+.custom-dur-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+
+.custom-dur-input {
+  width: 48px;
+  border: 1px solid var(--border-light);
+  border-radius: 2px;
+  padding: 1px 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-align: center;
+  color: var(--water-deep);
+  background: #fdfcf9;
+  -moz-appearance: textfield;
+}
+
+.custom-dur-input::-webkit-outer-spin-button,
+.custom-dur-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.custom-dur-unit {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-muted);
+}
+
+.custom-dur-btn {
+  background: var(--water-deep);
+  border: none;
+  border-radius: 2px;
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.custom-dur-btn:hover {
+  opacity: 0.88;
+}
+
 /* Zone Selector */
 .zone-select {
   width: 100%;

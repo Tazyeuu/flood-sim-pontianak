@@ -244,6 +244,12 @@
               <button class="dur-preset" data-hours="1.5">1,5 jam</button>
               <button class="dur-preset" data-hours="2">2 jam</button>
               <button class="dur-preset" data-hours="3">3 jam</button>
+              <div class="custom-dur-box" title="Ketik durasi hujan manual (0–240 menit)">
+                <span class="custom-dur-label">Kustom:</span>
+                <input type="number" id="inputCustomMinutes" class="custom-dur-input" min="0" max="240" step="1" value="60" />
+                <span class="custom-dur-unit">mnt</span>
+                <button id="btnSetCustom" class="custom-dur-btn">Set</button>
+              </div>
             </div>
             <div class="timeline-ticks">
               <span class="tick" data-hours="0">0.0j (Awal)</span>

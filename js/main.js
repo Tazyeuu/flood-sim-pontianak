@@ -989,6 +989,12 @@ function renderHours(hours) {
     }
   });
 
+  // Update custom minute input box
+  const inputCustom = document.getElementById("inputCustomMinutes");
+  if (inputCustom && document.activeElement !== inputCustom) {
+    inputCustom.value = Math.round(currentHours * 60);
+  }
+
   // Calculate Aggregates based on Current Zone
   let cumAreaM2 = 0;
   if (currentZone && stage.maxBand >= 0) {
@@ -1208,6 +1214,26 @@ function setupControls() {
     });
   });
 
+  // Custom typed duration (manual, in minutes — 0 to 240)
+  const inputCustom = document.getElementById("inputCustomMinutes");
+  const btnSetCustom = document.getElementById("btnSetCustom");
+  const applyCustomMinutes = () => {
+    const mins = parseInt(inputCustom.value, 10);
+    if (isNaN(mins) || mins < 0 || mins > 240) {
+      inputCustom.style.borderColor = "#b91c1c";
+      setTimeout(() => (inputCustom.style.borderColor = ""), 1200);
+      return;
+    }
+    inputCustom.blur();
+    pause();
+    renderHours(mins / 60);
+  };
+  if (btnSetCustom) btnSetCustom.addEventListener("click", applyCustomMinutes);
+  if (inputCustom) {
+    inputCustom.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") applyCustomMinutes();
+    });
+  }
   document.getElementById("btnPlay").addEventListener("click", togglePlay);
   document.getElementById("btnStep").addEventListener("click", () => {
     pause();
