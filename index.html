@@ -232,17 +232,26 @@
 
           <div class="deck-slider-group">
             <div class="slider-top-labels">
-              <span>Durasi Hujan & Tahap</span>
+              <span>Durasi Hujan (Fleksibel)</span>
               <span id="currentDurLabel" style="font-weight:600;color:var(--water-deep);">1,0 Jam — Gambar 1</span>
             </div>
-            <input type="range" class="time-range" id="timeSlider" min="0" max="5" step="1" value="1" />
+            <input type="range" class="time-range" id="timeSlider" min="0" max="4" step="0.05" value="1" />
+            <div class="duration-presets" id="durationPresets">
+              <button class="dur-preset" data-hours="0.25">15 mnt</button>
+              <button class="dur-preset" data-hours="0.5">30 mnt</button>
+              <button class="dur-preset" data-hours="0.75">45 mnt</button>
+              <button class="dur-preset active-preset" data-hours="1">1 jam</button>
+              <button class="dur-preset" data-hours="1.5">1,5 jam</button>
+              <button class="dur-preset" data-hours="2">2 jam</button>
+              <button class="dur-preset" data-hours="3">3 jam</button>
+            </div>
             <div class="timeline-ticks">
-              <span class="tick" data-step="0">0.0j (Awal)</span>
-              <span class="tick active-tick" data-step="1">1.0j (Gbr 1)</span>
-              <span class="tick" data-step="2">1.5j (Gbr 2)</span>
-              <span class="tick" data-step="3">2.0j (Gbr 3)</span>
-              <span class="tick" data-step="4">2.5j (Gbr 4)</span>
-              <span class="tick" data-step="5">3.0j (Gbr 5)</span>
+              <span class="tick" data-hours="0">0.0j (Awal)</span>
+              <span class="tick active-tick" data-hours="1">1.0j (Gbr 1)</span>
+              <span class="tick" data-hours="1.5">1.5j (Gbr 2)</span>
+              <span class="tick" data-hours="2">2.0j (Gbr 3)</span>
+              <span class="tick" data-hours="2.5">2.5j (Gbr 4)</span>
+              <span class="tick" data-hours="3">3.0j (Gbr 5)</span>
             </div>
           </div>
         </div>
@@ -371,6 +380,38 @@
             <div class="telemetry-cell">
               <div class="t-label">Pasang Surut Laut</div>
               <div class="t-val">+1,20<span class="t-unit">m</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Volume Synchronization Section -->
+        <div class="panel-section" style="background:var(--bg-parchment);">
+          <div class="section-label">
+            <span>Sinkronisasi Volume & Kontur</span>
+            <span style="font-size:9px;color:var(--water-deep);font-weight:700;">Neraca Massa Terverifikasi</span>
+          </div>
+          <div class="sync-balance-box">
+            <div class="sync-row">
+              <span class="sync-label">Volume Hujan Masuk (V = C·I·A·t):</span>
+              <span class="sync-val" id="syncVolIn">115.355 m³</span>
+            </div>
+            <div class="sync-row">
+              <span class="sync-label">Volume Tampung Kontur Terisi:</span>
+              <span class="sync-val" id="syncVolBasin">115.355 m³</span>
+            </div>
+            <div class="sync-row">
+              <span class="sync-label">Kontur Aktif Terisi:</span>
+              <span class="sync-val" id="syncActiveContour">Kontur 1 (+0,85 m)</span>
+            </div>
+            <div class="sync-row">
+              <span class="sync-label">Kapasitas Cekungan Terisi:</span>
+              <span class="sync-val" id="syncCapPct">1,8%</span>
+            </div>
+            <div class="sync-bar">
+              <div class="sync-bar-fill" id="syncBarFill" style="width: 1.8%;"></div>
+            </div>
+            <div class="sync-formula-note">
+              Model matematis sinkron: volume limpasan hujan terintegrasi langsung dengan kapasitas tampung prismoidal antar kontur elevasi: <i>V</i> = &sum; [ (<i>A</i><sub>1</sub> + <i>A</i><sub>2</sub>) / 2 ] &times; &Delta;<i>z</i>.
             </div>
           </div>
         </div>

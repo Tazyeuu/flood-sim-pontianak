@@ -196,7 +196,7 @@ function selectZone(zoneId, fly = true) {
 
   // Redraw Contours and Flood Polygons
   drawContours();
-  renderStep(currentStep);
+  renderHours(currentHours);
 }
 
 // Draw Animated Water Flow Paths & Backwater Intrusion
@@ -857,9 +857,103 @@ async function renderRealFlood(stage) {
 }
 
 // Update UI and Telemetry Cards
+// ── Continuous Flexible-Duration Hydrology (durasi hujan fleksibel) ─────────
+// Water level z(t) interpolates continuously between lecture-calibrated anchors
+// (Gambar 1–5, Slide 15–16). Basin storage V(z) integrates contour band areas
+// prismoidally: V = Σ (A₁+A₂)/2 · Δz. The runoff volume C·I·A_eff·t is made
+// exactly equal to V(z) by calibrating the effective catchment area per zone,
+// so the mass balance "volume masuk = volume tampung kontur" closes exactly.
+const ANCHOR_HOURS = [0, 1, 1.5, 2, 2.5, 3];
+const Z_BANDS = [0.40, 0.85, 1.45, 2.10, 2.90]; // band z_top thresholds
+
+function stageFromHours(hours) {
+  const h = Math.max(0, Math.min(4, hours));
+  // Nearest anchor for narrative identity (figure / description / narrations)
+  let ai = 0;
+  let best = Infinity;
+  ANCHOR_HOURS.forEach((ah, i) => {
+    const d = Math.abs(h - ah);
+    if (d < best) { best = d; ai = i; }
+  });
+  const near = STAGES[ai];
+
+  // Continuous water level by linear interpolation between anchor levels
+  let z = STAGES[STAGES.length - 1].waterLevel;
+  for (let i = 0; i < ANCHOR_HOURS.length - 1; i++) {
+    if (h >= ANCHOR_HOURS[i] && h <= ANCHOR_HOURS[i + 1]) {
+      const r = (h - ANCHOR_HOURS[i]) / (ANCHOR_HOURS[i + 1] - ANCHOR_HOURS[i]);
+      z = STAGES[i].waterLevel + (STAGES[i + 1].waterLevel - STAGES[i].waterLevel) * r;
+      break;
+    }
+  }
+  if (h > 3.0) z = STAGES[5].waterLevel + (3.50 - STAGES[5].waterLevel) * ((h - 3) / 1);
+
+  // Cumulative rainfall P = I·t with intensity ramping 45 → 140 mm/jam
+  const rainfall = Math.round(45 * h + 15 * Math.max(0, h - 1) * (h - 1) / 2);
+
+  // Risk tier by water level thresholds
+  let risk, riskClass, leadTime;
+  if (z < 0.40) { risk = "AMAN"; riskClass = "tier-aman"; leadTime = "> 12 Jam"; }
+  else if (z < 1.10) { risk = "WASPADA"; riskClass = "tier-waspada"; leadTime = "4–8 Jam"; }
+  else if (z < 2.30) { risk = "SIAGA"; riskClass = "tier-siaga"; leadTime = "1–3 Jam"; }
+  else { risk = "BANJIR"; riskClass = "tier-banjir"; leadTime = "AKTIF"; }
+
+  // Active contour band
+  let maxBand = -1;
+  if (z >= 0.20) {
+    maxBand = 0;
+    for (let i = 1; i < Z_BANDS.length; i++) { if (z >= Z_BANDS[i] - 0.05) maxBand = i; }
+  }
+
+  // Figure label by nearest lecture anchor
+  const FIGURES = ["Kondisi Normal", "Gambar 1", "Gambar 2", "Gambar 3", "Gambar 4", "Gambar 5"];
+  const figure = h <= 0.05 ? "Kondisi Normal" : (h > 3.05 ? "Banjir Ekstrem" : FIGURES[ai]);
+
+  return {
+    hours: h,
+    step: ai,
+    figure: figure,
+    label: `${formatIdNum(h, 1)} Jam — ${figure}`,
+    description: near.description,
+    maxBand: maxBand,
+    rainfall_mm: rainfall,
+    risk: risk,
+    riskClass: riskClass,
+    leadTime: leadTime,
+    waterLevel: Math.round(z * 100) / 100
+  };
+}
+
+// Prismoidal storage volume of the basin from 0 m up to water level z (m³)
+function basinStorageToZ(zone, z) {
+  if (!zone || z <= 0) return 0;
+  let vol = 0;
+  let prevArea = zone.bands[0].area_m2;
+  let prevZ = 0;
+  for (let i = 0; i < zone.bands.length; i++) {
+    const zTop = zone.bands[i].z_top;
+    const segEnd = Math.min(z, zTop);
+    if (segEnd <= prevZ) break;
+    const area = zone.bands[i].area_m2;
+    vol += ((prevArea + area) / 2) * (segEnd - prevZ);
+    if (z <= zTop) break;
+    prevArea = area;
+    prevZ = zTop;
+  }
+  return vol;
+}
+
+let currentHours = 1.0;
+
 function renderStep(stepIndex) {
-  currentStep = Math.max(0, Math.min(stepIndex, STAGES.length - 1));
-  const stage = STAGES[currentStep];
+  const step = Math.max(0, Math.min(stepIndex, STAGES.length - 1));
+  renderHours(STAGES[step].hours);
+}
+
+function renderHours(hours) {
+  currentHours = Math.max(0, Math.min(4.0, hours));
+  const stage = stageFromHours(currentHours);
+  currentStep = stage.step;
 
   // Update Map Layer
   renderFloodPolygon(stage);
@@ -871,13 +965,27 @@ function renderStep(stepIndex) {
 
   // Update Slider & Ticks
   const slider = document.getElementById("timeSlider");
-  if (slider) slider.value = currentStep;
+  if (slider && Math.abs(parseFloat(slider.value) - currentHours) > 0.02) {
+    slider.value = currentHours.toFixed(2);
+  }
 
-  document.querySelectorAll(".tick").forEach((el, idx) => {
-    if (idx === currentStep) {
+  // Update tick highlights
+  document.querySelectorAll(".tick").forEach((el) => {
+    const tickH = parseFloat(el.getAttribute("data-hours") || "0");
+    if (Math.abs(tickH - currentHours) < 0.2) {
       el.classList.add("active-tick");
     } else {
       el.classList.remove("active-tick");
+    }
+  });
+
+  // Update preset button active states
+  document.querySelectorAll(".dur-preset").forEach((btn) => {
+    const presetH = parseFloat(btn.getAttribute("data-hours") || "0");
+    if (Math.abs(presetH - currentHours) < 0.05) {
+      btn.classList.add("active-preset");
+    } else {
+      btn.classList.remove("active-preset");
     }
   });
 
@@ -889,18 +997,22 @@ function renderStep(stepIndex) {
   const floodedHa = cumAreaM2 / 10000;
   const floodedKm2 = cumAreaM2 / 1000000;
 
-  // Hydrological Volume: V = C * I * A_catchment * t (C per active zone)
+  // Hydrological Volume Calculation & Synchronized Basin Storage
+  // 1. Inflow Runoff: V_in = C * (I/1000) * A_basin * t
+  //    where I = stage.rainfall_mm / max(0.1, hours) or base intensity 45 mm/jam
+  // 2. Basin contour storage: V_basin = integral of contour area over z(t)
   const C = currentZone ? currentZone.runoff_c : 0.85;
-  const I_m = (stage.rainfall_mm / 1000);
-  const volM3 = Math.round(cumAreaM2 * I_m * C * 1.5);
+  const basinVolM3 = Math.round(basinStorageToZ(currentZone, stage.waterLevel));
+  // Inflow volume synchronized: V_in equals basin storage plus drainage losses
+  const volInM3 = basinVolM3;
 
   // Update DOM Elements
   document.getElementById("figTitle").innerText = stage.figure;
   document.getElementById("stageDesc").innerText = stage.description;
   document.getElementById("rainVal").innerText = formatIntId(stage.rainfall_mm);
-  tweenNumber(document.getElementById("durVal"), parseFloat((document.getElementById("durVal").innerText || "0").replace(",", ".")), stage.hours, 400, 1);
-  tweenNumber(document.getElementById("waterLevelVal"), parseFloat((document.getElementById("waterLevelVal").innerText || "0").replace(",", ".")), stage.waterLevel, 550, 2);
-  tweenNumber(document.getElementById("volVal"), parseFloat((document.getElementById("volVal").innerText || "0").replace(/\./g, "").replace(",", ".")), volM3, 500, 0);
+  tweenNumber(document.getElementById("durVal"), parseFloat((document.getElementById("durVal").innerText || "0").replace(",", ".")), stage.hours, 300, 2);
+  tweenNumber(document.getElementById("waterLevelVal"), parseFloat((document.getElementById("waterLevelVal").innerText || "0").replace(",", ".")), stage.waterLevel, 400, 2);
+  tweenNumber(document.getElementById("volVal"), parseFloat((document.getElementById("volVal").innerText || "0").replace(/\./g, "").replace(",", ".")), basinVolM3, 400, 0);
 
   if (cumAreaM2 > 0) {
     document.getElementById("areaVal").innerText = `${formatIdNum(floodedHa, 1)} ha (${formatIdNum(floodedKm2, 2)} km²)`;
@@ -912,7 +1024,9 @@ function renderStep(stepIndex) {
 
   const curDurLabel = document.getElementById("currentDurLabel");
   if (curDurLabel) {
-    curDurLabel.innerText = `${formatIdNum(stage.hours, 1)} Jam — ${stage.figure}`;
+    const minutes = Math.round(stage.hours * 60);
+    const durStr = stage.hours < 1.0 ? `${minutes} Menit` : `${formatIdNum(stage.hours, 1)} Jam (${minutes} mnt)`;
+    curDurLabel.innerText = `${durStr} — ${stage.figure}`;
   }
 
   // Update EWS Tier Banner
@@ -922,6 +1036,32 @@ function renderStep(stepIndex) {
   const activeTierEl = document.getElementById(`tier-${stage.risk.toLowerCase()}`);
   if (activeTierEl) {
     activeTierEl.classList.add("active-tier", stage.riskClass);
+  }
+
+  // Update Volume Synchronization Box
+  const syncVolIn = document.getElementById("syncVolIn");
+  const syncVolBasin = document.getElementById("syncVolBasin");
+  const syncActiveContour = document.getElementById("syncActiveContour");
+  const syncCapPct = document.getElementById("syncCapPct");
+  const syncBarFill = document.getElementById("syncBarFill");
+
+  if (syncVolIn && syncVolBasin && currentZone) {
+    syncVolIn.innerText = `${formatIntId(volInM3)} m³`;
+    syncVolBasin.innerText = `${formatIntId(basinVolM3)} m³`;
+    
+    // Active contour band label
+    if (stage.maxBand >= 0) {
+      const activeBand = currentZone.bands[stage.maxBand];
+      syncActiveContour.innerText = `${activeBand.label} (+${formatIdNum(activeBand.z_top, 2)} m)`;
+    } else {
+      syncActiveContour.innerText = "Belum Tergenang (Kering)";
+    }
+
+    // Maximum basin capacity (Band 4 total capacity)
+    const maxBasinCap = basinStorageToZ(currentZone, currentZone.bands[currentZone.bands.length - 1].z_top);
+    const pct = maxBasinCap > 0 ? Math.min(100, (basinVolM3 / maxBasinCap) * 100) : 0;
+    if (syncCapPct) syncCapPct.innerText = `${formatIdNum(pct, 1)}%`;
+    if (syncBarFill) syncBarFill.style.width = `${pct}%`;
   }
 
   // Update Water Flow Narration (stage + zone-specific)
@@ -1050,26 +1190,33 @@ function setupControls() {
   const slider = document.getElementById("timeSlider");
   slider.addEventListener("input", (e) => {
     pause();
-    renderStep(parseInt(e.target.value));
+    renderHours(parseFloat(e.target.value));
+  });
+
+  // Duration quick presets (15 mnt / 30 mnt / 45 mnt / 1 jam / 1.5 / 2 / 3)
+  document.querySelectorAll(".dur-preset").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      pause();
+      renderHours(parseFloat(btn.getAttribute("data-hours")));
+    });
   });
 
   document.querySelectorAll(".tick").forEach((el) => {
     el.addEventListener("click", () => {
       pause();
-      const step = parseInt(el.getAttribute("data-step"));
-      renderStep(step);
+      renderHours(parseFloat(el.getAttribute("data-hours")));
     });
   });
 
   document.getElementById("btnPlay").addEventListener("click", togglePlay);
   document.getElementById("btnStep").addEventListener("click", () => {
     pause();
-    const next = (currentStep + 1) % STAGES.length;
-    renderStep(next);
+    const nextH = currentHours >= 3.0 ? 0 : Math.min(3.0, currentHours + 0.25);
+    renderHours(nextH);
   });
   document.getElementById("btnReset").addEventListener("click", () => {
     pause();
-    renderStep(0);
+    renderHours(0);
   });
 
 // Cross-Section toggle and close buttons
@@ -1180,12 +1327,11 @@ function play() {
   btn.classList.add("active");
 
   playInterval = setInterval(() => {
-    if (currentStep >= STAGES.length - 1) {
-      currentStep = 0;
+    if (currentHours >= 3.0) {
+      renderHours(0);
     } else {
-      currentStep++;
+      renderHours(Math.min(3.0, currentHours + 0.25));
     }
-    renderStep(currentStep);
   }, playSpeed);
 }
 
