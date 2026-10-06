@@ -113,6 +113,41 @@
           </div>
         </div>
 
+        <!-- ░░░ Tide Gauge Instrument (Tinggi Air & Ambang) ░░░ -->
+        <div class="tide-gauge-panel" id="tideGaugePanel">
+          <div class="tg-title">Pengukur Pasang — Muka Air</div>
+          <div class="tg-body">
+            <div class="tg-gauge">
+              <div class="tg-tube">
+                <div class="tg-tick" style="bottom:0%"><span>0</span></div>
+                <div class="tg-tick" style="bottom:33.3%"><span>1</span></div>
+                <div class="tg-tick" style="bottom:66.6%"><span>2</span></div>
+                <div class="tg-tick" style="bottom:100%"><span>3</span></div>
+                <div class="tg-threshold" style="bottom:66.6%" title="Ambang Banjir +2,0 m"><span>AMBANG</span></div>
+                <div class="tg-fill" id="tgFill" style="height:0%"></div>
+              </div>
+              <div class="tg-value" id="tgValue">+0,00 m</div>
+            </div>
+            <div class="tg-legend">
+              <div class="tg-row"><span class="tg-dot" style="background:#2563eb"></span><span>Muka Air Aktual</span></div>
+              <div class="tg-row"><span class="tg-dot tg-dot-thresh"></span><span>Ambang Siaga (+2,0 m)</span></div>
+              <div class="tg-row"><span class="tg-dot" style="background:#8a8368"></span><span>Pasang Kapuas</span></div>
+              <div class="tg-status" id="tgStatus">NORMAL</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ░░░ Cinematic Story Mode Overlay ░░░ -->
+        <div class="story-overlay" id="storyOverlay">
+          <div class="story-caption-box">
+            <div class="story-time" id="storyTime">0,0 JAM</div>
+            <div class="story-title" id="storyTitle">Kondisi Normal</div>
+            <div class="story-text" id="storyText">Sungai Kapuas tenang; muka air di bawah ambang.</div>
+            <div class="story-progress"><div class="story-progress-fill" id="storyProgressFill"></div></div>
+          </div>
+          <button class="story-exit" id="btnStoryExit" title="Keluar mode sinematik">✕ Keluar</button>
+        </div>
+
         <!-- ░░░ Cross-Section Drawer (Potongan Melintang A–B) ░░░ -->
         <div class="cross-section-drawer" id="crossSectionDrawer">
           <div class="cs-header">
@@ -192,6 +227,7 @@
             <button id="btnStep" class="ctrl-btn"><span style="font-size:12px;">⏭</span> Langkah</button>
             <button id="btnReset" class="ctrl-btn"><span style="font-size:12px;">↺</span> Reset</button>
             <button id="btnToggleProfile" class="ctrl-btn" title="Tampilkan potongan melintang elevasi cekungan (Slide 10)"><span style="font-size:12px;">📉</span> Profil A–B</button>
+            <button id="btnStoryMode" class="ctrl-btn story-btn" title="Mode sinematik: putar seluruh simulasi sebagai narasi"><span style="font-size:12px;">🎬</span> Kisah</button>
           </div>
 
           <div class="deck-slider-group">

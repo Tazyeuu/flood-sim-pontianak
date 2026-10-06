@@ -494,6 +494,146 @@ function updateRainAnimation(stage) {
   }
 }
 
+// ── Tide Gauge Instrument Panel (Peilschaal) ───────────────────────────────
+function renderTideGauge(stage) {
+  const fill = document.getElementById("tgFill");
+  const val = document.getElementById("tgValue");
+  const status = document.getElementById("tgStatus");
+  if (!fill || !val || !status) return;
+
+  const wl = stage.waterLevel;
+  const pct = Math.min(100, Math.max(0, (wl / 3.0) * 100));
+  fill.style.height = `${pct.toFixed(1)}%`;
+  val.textContent = `+${formatIdNum(wl, 2)} m`;
+
+  if (wl >= 2.5) {
+    status.textContent = "BANJIR";
+    status.className = "tg-status status-banjir";
+  } else if (wl >= 1.8) {
+    status.textContent = "SIAGA";
+    status.className = "tg-status status-siaga";
+  } else if (wl >= 1.0) {
+    status.textContent = "WASPADA";
+    status.className = "tg-status status-waspada";
+  } else {
+    status.textContent = "NORMAL";
+    status.className = "tg-status";
+  }
+}
+
+// ── Cinematic Story Mode (Tur Presentasi Otomatis) ───────────────────────────
+const STORY_CHAPTERS = [
+  {
+    step: 0,
+    time: "0,0 Jam (Kondisi Normal)",
+    title: "Kondisi Hidrologis Awal",
+    text: "Sungai Kapuas mengalir normal pada pasang surut rata-rata (+0,40 m). Seluruh cekungan dan saluran parit Pontianak dalam kondisi kering siap tampung.",
+    fly: { center: [-0.032, 109.340], zoom: 13 },
+    openProfile: false
+  },
+  {
+    step: 1,
+    time: "1,0 Jam (Gambar 1)",
+    title: "Hujan Lebat Konvektif Mulai",
+    text: "Curah hujan 45 mm/jam memicu limpasan permukaan. Air mulai mengisi kantong depresi terendah (elevasi 0–0,4 m) di Pontianak Selatan hingga muka air +0,45 m.",
+    fly: { center: [-0.052, 109.340], zoom: 14 },
+    openProfile: false
+  },
+  {
+    step: 2,
+    time: "1,5 Jam (Gambar 2)",
+    title: "Peluapan ke Kontur Kedua",
+    text: "Kapasitas kantong pertama jenuh. Genangan meluas melompati kontur +0,85 m. Di muara parit, arus keluar mulai tertahan gelombang pasang Kapuas.",
+    fly: { center: [-0.050, 109.343], zoom: 14 },
+    openProfile: false
+  },
+  {
+    step: 3,
+    time: "2,0 Jam (Gambar 3)",
+    title: "Kolisi Pasang & Intrusi Backwater",
+    text: "Muka air mencapai +1,45 m dan melompati tanggul pematang aluvial (+1,1 m). Pasang laut mendorong air balik ke parit primer, melumpuhkan drainase gravitasi.",
+    fly: { center: [-0.047, 109.340], zoom: 14 },
+    openProfile: true
+  },
+  {
+    step: 4,
+    time: "2,5 Jam (Gambar 4)",
+    title: "Genangan Masif Permukiman",
+    text: "Muka air mencapai +2,12 m. Genangan menenggelamkan sebagian besar permukiman warga. Status EWS BPBD meningkat ke SIAGA.",
+    fly: { center: [-0.052, 109.336], zoom: 14 },
+    openProfile: true
+  },
+  {
+    step: 5,
+    time: "3,0 Jam (Gambar 5)",
+    title: "Puncak Banjir — Sistem Jenuh Total",
+    text: "Muka air ekstrem mencapai +2,85 m. Seluruh kota tergenang hingga 21.017 hektar. Status Tanggap Darurat aktif: sirene berbunyi dan perahu evakuasi dimobilisasi.",
+    fly: { center: [-0.028, 109.335], zoom: 13 },
+    openProfile: true
+  }
+];
+
+let storyIndex = 0;
+let storyTimer = null;
+let isStoryRunning = false;
+
+function startStoryMode() {
+  isStoryRunning = true;
+  storyIndex = 0;
+  pause(); // stop normal playback if running
+
+  const overlay = document.getElementById("storyOverlay");
+  if (overlay) overlay.classList.add("story-active");
+
+  playStoryChapter(0);
+}
+
+function stopStoryMode() {
+  isStoryRunning = false;
+  if (storyTimer) clearTimeout(storyTimer);
+
+  const overlay = document.getElementById("storyOverlay");
+  if (overlay) overlay.classList.remove("story-active");
+}
+
+function playStoryChapter(idx) {
+  if (!isStoryRunning || idx >= STORY_CHAPTERS.length) {
+    stopStoryMode();
+    return;
+  }
+
+  storyIndex = idx;
+  const chap = STORY_CHAPTERS[idx];
+
+  // Advance simulation to match chapter
+  renderStep(chap.step);
+
+  // Update caption box
+  const timeEl = document.getElementById("storyTime");
+  const titleEl = document.getElementById("storyTitle");
+  const textEl = document.getElementById("storyText");
+  const progFill = document.getElementById("storyProgressFill");
+
+  if (timeEl) timeEl.textContent = chap.time;
+  if (titleEl) titleEl.textContent = chap.title;
+  if (textEl) textEl.textContent = chap.text;
+  if (progFill) progFill.style.width = `${((idx + 1) / STORY_CHAPTERS.length) * 100}%`;
+
+  // Camera fly
+  if (chap.fly && map) {
+    map.flyTo(chap.fly.center, chap.fly.zoom, { duration: 1.8, easeLinearity: 0.25 });
+  }
+
+  // Cross-section drawer control
+  toggleCrossSection(chap.openProfile);
+
+  // Auto advance to next chapter after delay
+  const duration = idx === 0 ? 4000 : idx === 5 ? 6500 : 5000;
+  storyTimer = setTimeout(() => {
+    playStoryChapter(idx + 1);
+  }, duration);
+}
+
 // ── Animation Tween Helpers ─────────────────────────────────────────────────
 let animWaterLevel = 0.45; // current tweened water level for cross-section
 let csAnimFrame = null;
@@ -727,6 +867,7 @@ function renderStep(stepIndex) {
   drawFlowPaths(stage);
   updateRainAnimation(stage);
   renderCrossSection(stage);
+  renderTideGauge(stage);
 
   // Update Slider & Ticks
   const slider = document.getElementById("timeSlider");
@@ -940,6 +1081,22 @@ const btnCloseCrossSection = document.getElementById("btnCloseCrossSection");
 if (btnCloseCrossSection) {
   btnCloseCrossSection.addEventListener("click", () => toggleCrossSection(false));
 }
+
+// Story Mode toggle and exit buttons + ESC key
+const btnStoryMode = document.getElementById("btnStoryMode");
+if (btnStoryMode) {
+  btnStoryMode.addEventListener("click", () => {
+    if (isStoryRunning) stopStoryMode();
+    else startStoryMode();
+  });
+}
+const btnStoryExit = document.getElementById("btnStoryExit");
+if (btnStoryExit) {
+  btnStoryExit.addEventListener("click", () => stopStoryMode());
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") stopStoryMode();
+});
 
 // Sidebar Tab Switching
 document.querySelectorAll(".tab-btn").forEach(btn => {
