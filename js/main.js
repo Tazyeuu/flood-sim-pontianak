@@ -420,9 +420,9 @@ function renderFloodPolygon(stage) {
     const floodPoly = L.polygon(latlngs, {
       color: "#1e3a8a",
       weight: 2,
-      opacity: 0.98,
+      opacity: 0,
       fillColor: fillColor,
-      fillOpacity: 0.78
+      fillOpacity: 0
     });
 
     floodPoly.bindTooltip(
@@ -431,6 +431,13 @@ function renderFloodPolygon(stage) {
     );
 
     layerFlood.addLayer(floodPoly);
+
+    // Fade the water in like a rising flood (CSS transition on leaflet paths)
+    const targetOpacity = 0.98;
+    const targetFill = 0.78;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      floodPoly.setStyle({ opacity: targetOpacity, fillOpacity: targetFill });
+    }));
   }
 }
 
@@ -487,6 +494,41 @@ function updateRainAnimation(stage) {
   }
 }
 
+// ── Animation Tween Helpers ─────────────────────────────────────────────────
+let animWaterLevel = 0.45; // current tweened water level for cross-section
+let csAnimFrame = null;
+
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+function tweenNumber(el, from, to, duration, decimals) {
+  if (!el) return;
+  const startTime = performance.now();
+  function frame(now) {
+    const progress = Math.min(1, (now - startTime) / duration);
+    const val = from + (to - from) * easeOutCubic(progress);
+    el.textContent = formatIdNum(val, decimals);
+    if (progress < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function tweenWaterLevel(targetWl, duration = 550) {
+  if (csAnimFrame) cancelAnimationFrame(csAnimFrame);
+  const startWl = animWaterLevel;
+  const startTime = performance.now();
+  function frame(now) {
+    const progress = Math.min(1, (now - startTime) / duration);
+    animWaterLevel = startWl + (targetWl - startWl) * easeOutCubic(progress);
+    renderCrossSectionDirect(animWaterLevel);
+    if (progress < 1) {
+      csAnimFrame = requestAnimationFrame(frame);
+    }
+  }
+  csAnimFrame = requestAnimationFrame(frame);
+}
+
 // ── Cross-Section Drawer (Profil Melintang A–B) ─────────────────────────────
 const GROUND_PROFILE = [
   // [x, z_elevasi_m] — Sungai Kapuas → Pematang → Cekungan → Dataran Tinggi
@@ -511,12 +553,16 @@ function csInterpolateZ(x) {
 function renderCrossSection(stage) {
   const drawer = document.getElementById("crossSectionDrawer");
   if (!drawer || !drawer.classList.contains("cs-open")) return;
+  tweenWaterLevel(stage.waterLevel, 600);
+}
 
-  const wl = stage.waterLevel; // muka air (m, MSL)
+function renderCrossSectionDirect(wl) {
+  const drawer = document.getElementById("crossSectionDrawer");
+  if (!drawer || !drawer.classList.contains("cs-open")) return;
+
   const waterY = Z_TO_Y(wl);
 
-  // Build water polygon clipped to the ground profile.
-  // Water exists where ground elevation < water level, from the river (left) inward.
+  // Build water polygon clipped to the ground profile
   let path = `M 45,${Z_TO_Y(0)} L 45,${waterY.toFixed(1)} `;
   const step = 5;
   let inWater = false;
@@ -529,33 +575,37 @@ function renderCrossSection(stage) {
       }
       path += `L ${x},${Z_TO_Y(gz).toFixed(1)} `;
     } else if (inWater) {
-      // water surface ends: close polygon back up to water line
       path += `L ${x},${waterY.toFixed(1)} Z `;
       inWater = false;
       path += `M ${x},${waterY.toFixed(1)} `;
-      // continue next water body if any
     }
   }
   if (inWater) path += `L 585,${waterY.toFixed(1)} Z `;
   path += "Z";
 
   const waterEl = document.getElementById("csWater");
-  waterEl.setAttribute("d", path.trim());
-  waterEl.setAttribute("opacity", wl > 0.05 ? "0.9" : "0");
+  if (waterEl) {
+    waterEl.setAttribute("d", path.trim());
+    waterEl.setAttribute("opacity", wl > 0.05 ? "0.9" : "0");
+  }
 
   // Water level line + label
   const line = document.getElementById("csWLine");
-  line.setAttribute("y1", waterY.toFixed(1));
-  line.setAttribute("y2", waterY.toFixed(1));
-  line.setAttribute("opacity", wl > 0.02 ? "0.9" : "0");
+  if (line) {
+    line.setAttribute("y1", waterY.toFixed(1));
+    line.setAttribute("y2", waterY.toFixed(1));
+    line.setAttribute("opacity", wl > 0.02 ? "0.9" : "0");
+  }
 
   const lblRect = document.getElementById("csWLabel");
   const lblText = document.getElementById("csWLabelText");
-  lblRect.setAttribute("y", (waterY - 14).toFixed(1));
-  lblRect.setAttribute("opacity", "0.92");
-  lblText.setAttribute("y", (waterY - 4).toFixed(1));
-  lblText.setAttribute("opacity", "0.95");
-  lblText.textContent = `Muka Air: +${formatIdNum(wl, 2)} m`;
+  if (lblRect && lblText) {
+    lblRect.setAttribute("y", (waterY - 14).toFixed(1));
+    lblRect.setAttribute("opacity", "0.92");
+    lblText.setAttribute("y", (waterY - 4).toFixed(1));
+    lblText.setAttribute("opacity", "0.95");
+    lblText.textContent = `Muka Air: +${formatIdNum(wl, 2)} m`;
+  }
 
   // Status chips
   const chipLevee = document.getElementById("csChipLevee");
@@ -563,14 +613,20 @@ function renderCrossSection(stage) {
   const chipHouse = document.getElementById("csChipHouse");
 
   const leveeOvertopped = wl > LEVEE_Z;
-  chipLevee.textContent = leveeOvertopped ? "Tanggul: Terlampaui (Overtopping)" : "Tanggul: Aman";
-  chipLevee.className = "cs-chip " + (leveeOvertopped ? "chip-danger" : "");
+  if (chipLevee) {
+    chipLevee.textContent = leveeOvertopped ? "Tanggul: Terlampaui (Overtopping)" : "Tanggul: Aman";
+    chipLevee.className = "cs-chip " + (leveeOvertopped ? "chip-danger" : "");
+  }
 
-  chipWater.textContent = `Muka Air: +${formatIdNum(wl, 2)} m`;
+  if (chipWater) {
+    chipWater.textContent = `Muka Air: +${formatIdNum(wl, 2)} m`;
+  }
 
   const housesWet = HOUSES_X.some(hx => wl > csInterpolateZ(hx) + 0.05);
-  chipHouse.textContent = housesWet ? "Permukiman: Terendam" : "Permukiman: Kering";
-  chipHouse.className = "cs-chip " + (housesWet ? "chip-warn" : "");
+  if (chipHouse) {
+    chipHouse.textContent = housesWet ? "Permukiman: Terendam" : "Permukiman: Kering";
+    chipHouse.className = "cs-chip " + (housesWet ? "chip-warn" : "");
+  }
 }
 
 function toggleCrossSection(force) {
@@ -700,8 +756,10 @@ function renderStep(stepIndex) {
   // Update DOM Elements
   document.getElementById("figTitle").innerText = stage.figure;
   document.getElementById("stageDesc").innerText = stage.description;
-  document.getElementById("durVal").innerText = formatIdNum(stage.hours, 1);
   document.getElementById("rainVal").innerText = formatIntId(stage.rainfall_mm);
+  tweenNumber(document.getElementById("durVal"), parseFloat((document.getElementById("durVal").innerText || "0").replace(",", ".")), stage.hours, 400, 1);
+  tweenNumber(document.getElementById("waterLevelVal"), parseFloat((document.getElementById("waterLevelVal").innerText || "0").replace(",", ".")), stage.waterLevel, 550, 2);
+  tweenNumber(document.getElementById("volVal"), parseFloat((document.getElementById("volVal").innerText || "0").replace(/\./g, "").replace(",", ".")), volM3, 500, 0);
 
   if (cumAreaM2 > 0) {
     document.getElementById("areaVal").innerText = `${formatIdNum(floodedHa, 1)} ha (${formatIdNum(floodedKm2, 2)} km²)`;
@@ -709,8 +767,6 @@ function renderStep(stepIndex) {
     document.getElementById("areaVal").innerText = "0 ha (0,00 km²)";
   }
 
-  document.getElementById("volVal").innerText = formatIntId(volM3);
-  document.getElementById("waterLevelVal").innerText = formatIdNum(stage.waterLevel, 2);
   document.getElementById("leadTimeVal").innerText = stage.leadTime;
 
   const curDurLabel = document.getElementById("currentDurLabel");
