@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GeoAI — Simulasi Banjir Kota Pontianak</title>
+  <title>GeoAI - Simulasi Banjir Kota Pontianak</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -19,46 +19,29 @@
   <style>
     /* Cartographic tooltip styling */
     .carto-tooltip {
-      background: rgba(253, 251, 247, 0.96) !important;
-      border: 1px solid #3c3830 !important;
-      color: #1e1d1a !important;
-      font-family: "JetBrains Mono", monospace !important;
+      background: var(--bg-card) !important;
+      border: 1px solid var(--border-dark) !important;
+      color: var(--ink-primary) !important;
+      font-family: var(--font-mono) !important;
       font-size: 10.5px !important;
-      padding: 5px 8px !important;
+      padding: 6px 9px !important;
       border-radius: 2px !important;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.12) !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
     }
     .station-marker { background: transparent !important; border: none !important; }
   </style>
 </head>
 <body>
-  <!--
-    THESIS: A spatial flood simulation that replaces the generic dashboard layout with the
-    register of a survey gauging-station instrument panel — every readout is a measurement,
-    every control is a field instrument dial, the map is the drafting-table sheet.
-    OWN-WORLD: Parchment cartographic ground, dark rule borders, serif survey titles,
-    monospace telemetry numerals, hypsometric water depth tinting, zero decorative chrome.
-    STORY: The visitor scrubs rain duration across 6 stages, watches the flood polygon
-    expand through contour bands, reads real-time hydrological calculations, and understands
-    the EWS alert tier escalation from Aman to Banjir.
-    FIRST VIEWPORT: Full-bleed Leaflet map with sepia-toned tiles, synthetic basin contours,
-    river network, and IoT stations; a bottom control deck with slider and transport controls;
-    a right-hand instrument panel carrying the stage indicator, telemetry grid, EWS meter, and
-    layer toggles.
-    FORM: Instrument panel register, direction 6 of 7, seed key 42d7e35a.
-    FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review,
-    the verdict, DESIGN.md, and every shipping raster carrying its provenance.
-  -->
 
   <div class="app-container">
 
-    <!-- ░░░ Header ░░░ -->
+    <!-- Header Bar -->
     <header class="top-header">
       <div class="brand-section">
         <div class="brand-stamp">GeoAI</div>
         <div class="title-group">
           <h1>Simulasi Banjir Kota Pontianak</h1>
-          <span class="sub">Early Warning System — Pemodelan Spasial Genangan Delta Kapuas</span>
+          <span class="sub">Early Warning System: Pemodelan Spasial Genangan Delta Kapuas</span>
         </div>
       </div>
       <div class="header-meta">
@@ -66,14 +49,25 @@
           <span class="meta-label">Koordinat Delta</span>
           <span class="meta-val">0°03'43" S, 109°20'17" E</span>
         </div>
-        <div class="meta-chip">
-          <span class="meta-label">Bahan Kuliah</span>
-          <span class="meta-val">Dr. Ir. Yus Sholva, S.T., M.T.</span>
-        </div>
+        <div class="meta-divider"></div>
+        <button id="btnMethodology" class="meta-action-btn" title="Lihat dasar teori, slide kuliah, dan rumus hidrologi" aria-label="Buka metodologi dan referensi">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>Metodologi</span>
+        </button>
+        <button id="btnThemeToggle" class="meta-action-btn theme-toggle-btn" title="Ganti mode tampilan (Terang / Gelap)" aria-label="Ganti mode tampilan">
+          <svg class="theme-icon-moon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <span>Gelap</span>
+        </button>
       </div>
     </header>
 
-    <!-- ░░░ Main Stage ░░░ -->
+    <!-- Main Stage -->
     <div class="main-stage">
 
       <!-- Map Pane -->
@@ -81,63 +75,69 @@
         <div id="map"></div>
         <div class="rain-overlay" id="rainOverlay"></div>
 
-        <!-- Map Overlay: Mini Depth Legend -->
-        <div class="carto-scale-legend">
-          <div class="carto-title">Klasifikasi Kedalaman</div>
-          <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
-            <span style="width:12px;height:10px;background:#1e3a8a;display:inline-block;border:1px solid #222;"></span>
-            <span style="font-size:9.5px;">&gt; 2,0 m (Inundasi Parah)</span>
-          </div>
-          <div style="display:flex; gap:6px; align-items:center; margin-top:2px;">
-            <span style="width:12px;height:10px;background:#2563eb;display:inline-block;border:1px solid #222;"></span>
-            <span style="font-size:9.5px;">1,0 – 2,0 m (Tinggi)</span>
-          </div>
-          <div style="display:flex; gap:6px; align-items:center; margin-top:2px;">
-            <span style="width:12px;height:10px;background:#3b82f6;display:inline-block;border:1px solid #222;"></span>
-            <span style="font-size:9.5px;">0,5 – 1,0 m (Sedang)</span>
-          </div>
-          <div style="display:flex; gap:6px; align-items:center; margin-top:2px;">
-            <span style="width:12px;height:10px;background:#93c5fd;display:inline-block;border:1px solid #222;"></span>
-            <span style="font-size:9.5px;">&lt; 0,5 m (Dangkal)</span>
-          </div>
-          <div style="display:flex; gap:6px; align-items:center; margin-top:4px; border-top:1px solid #d5cdbd; padding-top:4px;">
-            <svg width="18" height="8"><line x1="0" y1="4" x2="18" y2="4" stroke="#0284c7" stroke-width="2.5" stroke-dasharray="4,4"/></svg>
-            <span style="font-size:9px;">Limpasan Parit (Keluar)</span>
-          </div>
-          <div style="display:flex; gap:6px; align-items:center; margin-top:2px;">
-            <svg width="18" height="8"><line x1="0" y1="4" x2="18" y2="4" stroke="#ea580c" stroke-width="2.5" stroke-dasharray="4,4"/></svg>
-            <span style="font-size:9px;">Backwater Pasang (Masuk)</span>
-          </div>
-          <div style="margin-top:6px;font-size:8.5px;color:#8c8577;line-height:1.35;border-top:1px solid #d5cdbd;padding-top:4px;">
-            Data sintetik (cekungan model).<br/>Bukan data survei lapangan.
-          </div>
-        </div>
+        <!-- Left HUD Column (Unified Legend & Tide Gauge) -->
+        <div class="carto-hud-column" id="cartoHudColumn">
 
-        <!-- ░░░ Tide Gauge Instrument (Tinggi Air & Ambang) ░░░ -->
-        <div class="tide-gauge-panel" id="tideGaugePanel">
-          <div class="tg-title">Pengukur Pasang — Muka Air</div>
-          <div class="tg-body">
-            <div class="tg-gauge">
-              <div class="tg-tube">
-                <div class="tg-tick" style="bottom:0%"><span>0</span></div>
-                <div class="tg-tick" style="bottom:33.3%"><span>1</span></div>
-                <div class="tg-tick" style="bottom:66.6%"><span>2</span></div>
-                <div class="tg-tick" style="bottom:100%"><span>3</span></div>
-                <div class="tg-threshold" style="bottom:66.6%" title="Ambang Banjir +2,0 m"><span>AMBANG</span></div>
-                <div class="tg-fill" id="tgFill" style="height:0%"></div>
+          <!-- Depth Classification Legend -->
+          <div class="carto-scale-legend">
+            <div class="carto-title">Klasifikasi Kedalaman</div>
+            <div class="legend-row">
+              <span class="legend-swatch" style="background:#172554;"></span>
+              <span class="legend-label">&gt; 2,0 m (Inundasi Parah)</span>
+            </div>
+            <div class="legend-row">
+              <span class="legend-swatch" style="background:#1e40af;"></span>
+              <span class="legend-label">1,0 - 2,0 m (Tinggi)</span>
+            </div>
+            <div class="legend-row">
+              <span class="legend-swatch" style="background:#2563eb;"></span>
+              <span class="legend-label">0,5 - 1,0 m (Sedang)</span>
+            </div>
+            <div class="legend-row">
+              <span class="legend-swatch" style="background:#60a5fa;"></span>
+              <span class="legend-label">&lt; 0,5 m (Dangkal)</span>
+            </div>
+            <div class="legend-divider"></div>
+            <div class="legend-row">
+              <svg width="18" height="8"><line x1="0" y1="4" x2="18" y2="4" stroke="#0284c7" stroke-width="2.5" stroke-dasharray="4,4"/></svg>
+              <span class="legend-label">Limpasan Parit (Keluar)</span>
+            </div>
+            <div class="legend-row">
+              <svg width="18" height="8"><line x1="0" y1="4" x2="18" y2="4" stroke="#ea580c" stroke-width="2.5" stroke-dasharray="4,4"/></svg>
+              <span class="legend-label">Backwater Pasang (Masuk)</span>
+            </div>
+            <div class="legend-caption">
+              Pemodelan cekungan terintegrasi delta.
+            </div>
+          </div>
+
+          <!-- Tide Gauge Instrument (Peilschaal) -->
+          <div class="tide-gauge-panel" id="tideGaugePanel">
+            <div class="tg-title">Pengukur Pasang: Muka Air</div>
+            <div class="tg-body">
+              <div class="tg-gauge">
+                <div class="tg-tube">
+                  <div class="tg-tick" style="bottom:0%"><span>0</span></div>
+                  <div class="tg-tick" style="bottom:33.3%"><span>1</span></div>
+                  <div class="tg-tick" style="bottom:66.6%"><span>2</span></div>
+                  <div class="tg-tick" style="bottom:100%"><span>3</span></div>
+                  <div class="tg-threshold" style="bottom:66.6%" title="Ambang Banjir +2,0 m"><span>AMBANG</span></div>
+                  <div class="tg-fill" id="tgFill" style="height:0%"></div>
+                </div>
+                <div class="tg-value" id="tgValue">+0,00 m</div>
               </div>
-              <div class="tg-value" id="tgValue">+0,00 m</div>
-            </div>
-            <div class="tg-legend">
-              <div class="tg-row"><span class="tg-dot" style="background:#2563eb"></span><span>Muka Air Aktual</span></div>
-              <div class="tg-row"><span class="tg-dot tg-dot-thresh"></span><span>Ambang Siaga (+2,0 m)</span></div>
-              <div class="tg-row"><span class="tg-dot" style="background:#8a8368"></span><span>Pasang Kapuas</span></div>
-              <div class="tg-status" id="tgStatus">NORMAL</div>
+              <div class="tg-legend">
+                <div class="tg-row"><span class="tg-dot" style="background:#2563eb"></span><span>Muka Air Aktual</span></div>
+                <div class="tg-row"><span class="tg-dot tg-dot-thresh"></span><span>Ambang Siaga (+2,0 m)</span></div>
+                <div class="tg-row"><span class="tg-dot" style="background:#8a8368"></span><span>Pasang Kapuas</span></div>
+                <div class="tg-status" id="tgStatus">NORMAL</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- ░░░ Cinematic Story Mode Overlay ░░░ -->
+        </div><!-- /carto-hud-column -->
+
+        <!-- Cinematic Story Mode Overlay -->
         <div class="story-overlay" id="storyOverlay">
           <div class="story-caption-box">
             <div class="story-time" id="storyTime">0,0 JAM</div>
@@ -145,18 +145,16 @@
             <div class="story-text" id="storyText">Sungai Kapuas tenang; muka air di bawah ambang.</div>
             <div class="story-progress"><div class="story-progress-fill" id="storyProgressFill"></div></div>
           </div>
-          <button class="story-exit" id="btnStoryExit" title="Keluar mode sinematik">✕ Keluar</button>
+          <button class="story-exit" id="btnStoryExit" title="Keluar mode sinematik" aria-label="Keluar mode sinematik">✕ Keluar</button>
         </div>
 
-        <!-- ░░░ Cross-Section Drawer (Potongan Melintang A–B) ░░░ -->
+        <!-- Cross-Section Drawer (Potongan Melintang A-B) -->
         <div class="cross-section-drawer" id="crossSectionDrawer">
           <div class="cs-header">
-            <span class="cs-title">Profil Melintang A–B — Potongan Topografi Cekungan</span>
-            <span class="cs-ref">Ref: Slide 10–12</span>
-            <button id="btnCloseCrossSection" class="cs-close" title="Tutup profil melintang">✕</button>
+            <span class="cs-title">Profil Melintang A-B: Potongan Topografi Cekungan</span>
+            <button id="btnCloseCrossSection" class="cs-close" title="Tutup profil melintang" aria-label="Tutup profil melintang">✕</button>
           </div>
           <svg id="crossSectionSvg" viewBox="0 0 600 140" preserveAspectRatio="none" class="cs-svg">
-            <!-- Sky / backdrop -->
             <defs>
               <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stop-color="#2563eb" stop-opacity="0.75"/>
@@ -167,7 +165,7 @@
                 <line x1="0" y1="0" x2="0" y2="6" stroke="#c9c1a8" stroke-width="1"/>
               </pattern>
             </defs>
-            <rect x="0" y="0" width="600" height="140" fill="#faf7ee"/>
+            <rect x="0" y="0" width="600" height="140" fill="#faf7ee" class="cs-svg-bg"/>
             <!-- Elevation gridlines -->
             <g id="csGrid" stroke="#d8d2c0" stroke-width="0.6" stroke-dasharray="2 3">
               <line x1="45" y1="115" x2="585" y2="115"/>
@@ -182,19 +180,19 @@
               <text x="38" y="28" text-anchor="end">3.0</text>
               <text x="300" y="138" text-anchor="middle" font-size="7">Profil Melintang: Sungai Kapuas (A) → Cekungan Permukiman → Dataran Tinggi (B)</text>
             </g>
-            <!-- Ground terrain cross-section (earth hatch fill) -->
+            <!-- Ground terrain cross-section -->
             <path id="csGround" d="M 45,115 L 50,130 L 120,109 L 180,82 L 280,109 L 380,104.5 L 460,79 L 560,37 L 585,37 L 585,140 L 45,140 Z"
                   fill="url(#earthHatch)" stroke="#6b6448" stroke-width="1.2"/>
-            <!-- Kapuas river water at left (static tidal) -->
+            <!-- Kapuas river water at left -->
             <path d="M 45,115 L 50,130 L 100,112 L 120,109 L 120,140 L 45,140 Z" fill="#93c5fd" opacity="0.5"/>
-            <!-- Dynamic flood water polygon (updated by JS) -->
+            <!-- Dynamic flood water polygon -->
             <path id="csWater" d="" fill="url(#waterGrad)" opacity="0"/>
             <!-- Levee marker -->
             <g id="csLeveeMarker">
               <line id="csLeveeLine" x1="180" y1="82" x2="180" y2="140" stroke="#8a6d3b" stroke-width="1.5" stroke-dasharray="3 2"/>
               <text id="csLeveeLabel" x="180" y="76" text-anchor="middle" font-size="7" fill="#8a6d3b" font-family="'JetBrains Mono', monospace">Pematang +1,1 m</text>
             </g>
-            <!-- Settlement houses in the depression -->
+            <!-- Settlement houses -->
             <g id="csHouses" stroke="#4a4536" stroke-width="1" fill="#fdfbf4">
               <path d="M 270,109 l 5,-7 l 5,7 v 6 h -10 z"/>
               <path d="M 300,106 l 6,-8 l 6,8 v 9 h -12 z"/>
@@ -208,8 +206,8 @@
               <text id="csWLabelText" x="509" y="105" text-anchor="middle" font-size="7.5" fill="#f0f6ff" font-family="'JetBrains Mono', monospace" opacity="0">Muka Air: +0.00 m</text>
             </g>
             <g id="csAnnotations">
-              <text x="52" y="126" font-size="6.5" fill="#0c4a8c" font-weight="600" font-family="'JetBrains Mono', monospace">A — Sungai Kapuas</text>
-              <text x="565" y="33" font-size="6.5" fill="#6b6448" font-family="'JetBrains Mono', monospace" text-anchor="end">B — Dataran Tinggi</text>
+              <text x="52" y="126" font-size="6.5" fill="#0c4a8c" font-weight="600" font-family="'JetBrains Mono', monospace">A: Sungai Kapuas</text>
+              <text x="565" y="33" font-size="6.5" fill="#6b6448" font-family="'JetBrains Mono', monospace" text-anchor="end">B: Dataran Tinggi</text>
               <text x="300" y="100" font-size="6.5" fill="#8a8368" font-family="'JetBrains Mono', monospace" text-anchor="middle">Cekungan Permukiman</text>
             </g>
           </svg>
@@ -220,28 +218,54 @@
           </div>
         </div>
 
-        <!-- ░░░ Floating Control Deck ░░░ -->
+        <!-- Floating Control Deck -->
         <div class="map-floating-deck">
           <div class="deck-controls">
-            <button id="btnPlay" class="ctrl-btn"><span style="font-size:12px;">▶</span> Putar</button>
-            <button id="btnStep" class="ctrl-btn"><span style="font-size:12px;">⏭</span> Langkah</button>
-            <button id="btnReset" class="ctrl-btn"><span style="font-size:12px;">↺</span> Reset</button>
-            <button id="btnToggleProfile" class="ctrl-btn" title="Tampilkan potongan melintang elevasi cekungan (Slide 10)"><span style="font-size:12px;">📉</span> Profil A–B</button>
-            <button id="btnStoryMode" class="ctrl-btn story-btn" title="Mode sinematik: putar seluruh simulasi sebagai narasi"><span style="font-size:12px;">🎬</span> Kisah</button>
+            <button id="btnPlay" class="ctrl-btn ctrl-btn-primary" aria-label="Putar simulasi">
+              <svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              <span class="btn-text">Putar</span>
+            </button>
+            <button id="btnStep" class="ctrl-btn" aria-label="Langkah maju">
+              <svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+              </svg>
+              <span class="btn-text">Langkah</span>
+            </button>
+            <button id="btnReset" class="ctrl-btn" aria-label="Setel ulang simulasi">
+              <svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M3 12a9 9 0 1 0 2.64-6.36L2 9"/>
+                <path d="M2 3v6h6"/>
+              </svg>
+              <span class="btn-text">Reset</span>
+            </button>
+            <button id="btnToggleProfile" class="ctrl-btn" title="Tampilkan potongan melintang elevasi cekungan" aria-label="Tampilkan profil melintang A-B">
+              <svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 20h18M4 17l4-5 4 3 6-8 2 2"/>
+              </svg>
+              <span class="btn-text">Profil A-B</span>
+            </button>
+            <button id="btnStoryMode" class="ctrl-btn story-btn" title="Mode sinematik: putar narasi simulasi terarah" aria-label="Mulai mode narasi">
+              <svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              <span class="btn-text">Kisah</span>
+            </button>
           </div>
 
           <div class="deck-slider-group">
             <div class="slider-top-labels">
               <span class="slider-title-label">Durasi Hujan</span>
               <div class="manual-time-input-group">
-                <span class="manual-label">Atur Manual:</span>
+                <span class="manual-label">Atur:</span>
                 <input type="number" id="inputCustomMinutes" class="manual-input" min="0" max="240" step="1" value="60" aria-label="Durasi hujan dalam menit" />
                 <span class="manual-unit">mnt</span>
-                <button id="btnSetCustom" class="manual-btn" type="button">Set</button>
+                <button id="btnSetCustom" class="manual-btn" type="button" aria-label="Terapkan durasi manual">Set</button>
               </div>
-              <span id="currentDurLabel" class="slider-status-badge">1,0 Jam — Gambar 1</span>
+              <span id="currentDurLabel" class="slider-status-badge">1,0 Jam - Gambar 1</span>
             </div>
-            <input type="range" class="time-range" id="timeSlider" min="0" max="4" step="0.05" value="1" />
+            <input type="range" class="time-range" id="timeSlider" min="0" max="4" step="0.05" value="1" aria-label="Penggeser durasi hujan" />
             <div class="duration-presets" id="durationPresets">
               <button class="dur-preset" data-hours="0.25">15 mnt</button>
               <button class="dur-preset" data-hours="0.5">30 mnt</button>
@@ -253,269 +277,329 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- ░░░ Instrument Panel Sidebar ░░░ -->
+      </div><!-- /map-pane -->
+
+      <!-- Instrument Panel Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-header">
           <div class="panel-title">Panel Instrumen</div>
-          <div class="panel-ref">Bahan Kuliah Hal. 15–16</div>
+          <div class="panel-subtitle">Telemetri Spasial Delta</div>
         </div>
 
-        <!-- Sidebar Tabs -->
-        <nav class="sidebar-tabs">
+        <!-- Segmented Tab Navigation -->
+        <nav class="sidebar-tabs" aria-label="Navigasi tab instrumen">
           <button class="tab-btn active-tab" data-tab="status">Status</button>
           <button class="tab-btn" data-tab="analisis">Analisis</button>
           <button class="tab-btn" data-tab="data">Lapisan</button>
         </nav>
 
+        <!-- Tab 1: Status -->
         <div id="tab-status" class="tab-panel active-panel">
 
-        <!-- Zone Selector -->
-        <div class="panel-section" style="background:var(--bg-parchment);">
-          <div class="section-label">
-            <span>Wilayah Kajian Banjir</span>
-            <span style="font-size:9px;color:var(--ink-faint);">4 Zona Rawan</span>
-          </div>
-          <select id="zoneSelect" class="zone-select">
-            <option value="pontianak_selatan">Pontianak Selatan — Parit Tokaya & Untan</option>
-            <option value="pontianak_barat">Pontianak Barat — Koridor Sungai Jawi</option>
-            <option value="pontianak_timur">Pontianak Timur — Delta Landak & Kapuas</option>
-            <option value="pontianak_tenggara">Pontianak Tenggara — Kubah Gambut & Sei Raya</option>
-          </select>
-          <div id="zoneNotes" class="zone-notes"></div>
-        </div>
-
-        <!-- Stage Indicator -->
-        <div class="panel-section">
-          <div class="section-label">
-            <span>Tahap Simulasi Spasial</span>
-            <span style="font-size:9.5px;color:var(--ink-faint);">Ref: Slide 15</span>
-          </div>
-          <div class="stage-hero">
-            <div class="stage-badge" id="figTitle">Gambar 1</div>
-            <div class="stage-desc" id="stageDesc">Air mulai menggenangi cekungan depresi terendah (Dataran Rendah elevasi 0–0.4 m). Muka air mencapai 0,45 m.</div>
-          </div>
-        </div>
-
-        <!-- Decision Support Card -->
-        <div class="panel-section">
-          <div class="section-label">
-            <span>Protokol Tindakan (SPK)</span>
-            <span style="font-size:9px;color:var(--ink-faint);">Ref: Slide 8, 19–21</span>
-          </div>
-          <div class="decision-card" id="decisionCard">
-            <div class="decision-header">
-              <span class="decision-status-chip" id="decisionChip">AMAN</span>
-              <span class="decision-authority">BPBD Kota Pontianak</span>
+          <!-- Zone Selector -->
+          <div class="panel-section zone-section">
+            <div class="section-label">
+              <span>Wilayah Kajian</span>
+              <span class="section-tag">4 Zona</span>
             </div>
-            <ol class="decision-actions" id="decisionActions">
-              <li>Memuat protokol...</li>
-            </ol>
-            <div class="decision-footer" id="decisionFooter">
-              Pemicu: status simulasi & telemetri stage aktif.
+            <select id="zoneSelect" class="zone-select" aria-label="Pilih wilayah kajian">
+              <option value="pontianak_selatan">Pontianak Selatan (Parit Tokaya & Untan)</option>
+              <option value="pontianak_barat">Pontianak Barat (Koridor Sungai Jawi)</option>
+              <option value="pontianak_timur">Pontianak Timur (Delta Landak & Kapuas)</option>
+              <option value="pontianak_tenggara">Pontianak Tenggara (Kubah Gambut & Sei Raya)</option>
+            </select>
+            <div id="zoneNotes" class="zone-notes"></div>
+          </div>
+
+          <!-- Stage Indicator -->
+          <div class="panel-section">
+            <div class="section-label">
+              <span>Tahap Simulasi</span>
+              <span class="section-tag">Depresi Bertahap</span>
+            </div>
+            <div class="stage-hero">
+              <div class="stage-badge" id="figTitle">Gambar 1</div>
+              <div class="stage-desc" id="stageDesc">Air mulai menggenangi cekungan depresi terendah (Dataran Rendah elevasi 0-0.4 m). Muka air mencapai 0,45 m.</div>
             </div>
           </div>
-        </div>
 
-        <!-- Water Dynamics Narration -->
-        <div class="panel-section">
-          <div class="section-label">
-            <span>Dinamika Aliran Air</span>
-            <span style="font-size:9px;color:var(--ink-faint);">Outflow ⇢ / Inflow ⇠</span>
+          <!-- Decision Support Card -->
+          <div class="panel-section">
+            <div class="section-label">
+              <span>Protokol Tindakan Darurat</span>
+              <span class="section-tag">SPK BPBD</span>
+            </div>
+            <div class="decision-card" id="decisionCard">
+              <div class="decision-header">
+                <span class="decision-status-chip" id="decisionChip">AMAN</span>
+                <span class="decision-authority">BPBD Kota Pontianak</span>
+              </div>
+              <ol class="decision-actions" id="decisionActions">
+                <li>Memuat protokol...</li>
+              </ol>
+              <div class="decision-footer" id="decisionFooter">
+                Pemicu: status simulasi & telemetri stage aktif.
+              </div>
+            </div>
           </div>
-          <div id="flowNarration" class="zone-notes" style="border-left-color:#0284c7;">
-            Memuat narasi aliran...
-          </div>
-        </div>
 
-        <!-- EWS Tier -->
-        <div class="panel-section">
-          <div class="section-label">
-            <span>Status Peringatan Dini</span>
-            <span style="font-weight:600;font-size:9px;color:var(--water-deep);">FloodSense-Kalbar</span>
+          <!-- Water Dynamics Narration -->
+          <div class="panel-section">
+            <div class="section-label">
+              <span>Dinamika Aliran Air</span>
+              <span class="section-tag">Limpasan & Pasang</span>
+            </div>
+            <div id="flowNarration" class="zone-notes" style="border-left-color:#0284c7;">
+              Memuat narasi aliran...
+            </div>
           </div>
-          <div class="ews-meter">
-            <div class="ews-tier" id="tier-aman">AMAN</div>
-            <div class="ews-tier" id="tier-waspada">WASPADA</div>
-            <div class="ews-tier" id="tier-siaga">SIAGA</div>
-            <div class="ews-tier" id="tier-banjir">BANJIR</div>
+
+          <!-- EWS Tier -->
+          <div class="panel-section">
+            <div class="section-label">
+              <span>Peringatan Dini EWS</span>
+              <span class="section-tag">FloodSense-Kalbar</span>
+            </div>
+            <div class="ews-meter">
+              <div class="ews-tier" id="tier-aman">AMAN</div>
+              <div class="ews-tier" id="tier-waspada">WASPADA</div>
+              <div class="ews-tier" id="tier-siaga">SIAGA</div>
+              <div class="ews-tier" id="tier-banjir">BANJIR</div>
+            </div>
+            <div class="lead-time-row">
+              <span class="lead-time-label">Waktu Respons (Lead Time):</span>
+              <span id="leadTimeVal" class="lead-time-val">6-8 Jam</span>
+            </div>
           </div>
-          <div style="display:flex; justify-content:space-between; margin-top:8px; font-family:var(--font-mono); font-size:10.5px;">
-            <span style="color:var(--ink-muted);">Waktu Respons (Lead Time):</span>
-            <span id="leadTimeVal" style="font-weight:600;color:var(--ink-primary);">6–8 Jam</span>
-          </div>
-        </div>
 
         </div><!-- /tab-status -->
 
+        <!-- Tab 2: Analisis -->
         <div id="tab-analisis" class="tab-panel">
 
-        <!-- Telemetry Readouts -->
-        <div class="panel-section">
-          <div class="section-label">Telemetri Hidrologi Terhitung</div>
-          <div class="telemetry-grid">
-            <div class="telemetry-cell">
-              <div class="t-label">Durasi Hujan</div>
-              <div class="t-val"><span id="durVal">1,0</span><span class="t-unit">jam</span></div>
+          <!-- Telemetry Readouts -->
+          <div class="panel-section">
+            <div class="section-label">
+              <span>Telemetri Hidrologi</span>
+              <span class="section-tag">Terhitung Real-Time</span>
             </div>
-            <div class="telemetry-cell">
-              <div class="t-label">Curah Hujan</div>
-              <div class="t-val"><span id="rainVal">45</span><span class="t-unit">mm</span></div>
-            </div>
-            <div class="telemetry-cell">
-              <div class="t-label">Luas Genangan</div>
-              <div class="t-val" style="font-size:11.5px;" id="areaVal">12,9 ha (0,13 km²)</div>
-            </div>
-            <div class="telemetry-cell">
-              <div class="t-label">Vol. Limpasan</div>
-              <div class="t-val" style="font-size:11.5px;"><span id="volVal">7.400</span><span class="t-unit">m³</span></div>
-            </div>
-            <div class="telemetry-cell">
-              <div class="t-label">Muka Air Sungai</div>
-              <div class="t-val"><span id="waterLevelVal">0,45</span><span class="t-unit">m</span></div>
-            </div>
-            <div class="telemetry-cell">
-              <div class="t-label">Pasang Surut Laut</div>
-              <div class="t-val">+1,20<span class="t-unit">m</span></div>
+            <div class="telemetry-grid">
+              <div class="telemetry-cell">
+                <div class="t-label">Durasi Hujan</div>
+                <div class="t-val"><span id="durVal">1,0</span><span class="t-unit">jam</span></div>
+              </div>
+              <div class="telemetry-cell">
+                <div class="t-label">Curah Hujan</div>
+                <div class="t-val"><span id="rainVal">45</span><span class="t-unit">mm</span></div>
+              </div>
+              <div class="telemetry-cell">
+                <div class="t-label">Luas Genangan</div>
+                <div class="t-val" style="font-size:12px;" id="areaVal">12,9 ha (0,13 km²)</div>
+              </div>
+              <div class="telemetry-cell">
+                <div class="t-label">Vol. Limpasan</div>
+                <div class="t-val" style="font-size:12px;"><span id="volVal">7.400</span><span class="t-unit">m³</span></div>
+              </div>
+              <div class="telemetry-cell">
+                <div class="t-label">Muka Air Sungai</div>
+                <div class="t-val"><span id="waterLevelVal">0,45</span><span class="t-unit">m</span></div>
+              </div>
+              <div class="telemetry-cell">
+                <div class="t-label">Pasang Surut Laut</div>
+                <div class="t-val">+1,20<span class="t-unit">m</span></div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Volume Synchronization Section -->
-        <div class="panel-section" style="background:var(--bg-parchment);">
-          <div class="section-label">
-            <span>Sinkronisasi Volume & Kontur</span>
-            <span style="font-size:9px;color:var(--water-deep);font-weight:700;">Neraca Massa Terverifikasi</span>
+          <!-- Volume Synchronization Section -->
+          <div class="panel-section sync-section">
+            <div class="section-label">
+              <span>Sinkronisasi Volume & Kontur</span>
+              <span class="section-tag">Neraca Massa</span>
+            </div>
+            <div class="sync-balance-box">
+              <div class="sync-row">
+                <span class="sync-label">Volume Hujan (V = C·I·A·t):</span>
+                <span class="sync-val" id="syncVolIn">115.355 m³</span>
+              </div>
+              <div class="sync-row">
+                <span class="sync-label">Tampungan Kontur Terisi:</span>
+                <span class="sync-val" id="syncVolBasin">115.355 m³</span>
+              </div>
+              <div class="sync-row">
+                <span class="sync-label">Kontur Aktif:</span>
+                <span class="sync-val" id="syncActiveContour">Kontur 1 (+0,85 m)</span>
+              </div>
+              <div class="sync-row">
+                <span class="sync-label">Kapasitas Cekungan:</span>
+                <span class="sync-val" id="syncCapPct">1,8%</span>
+              </div>
+              <div class="sync-bar">
+                <div class="sync-bar-fill" id="syncBarFill" style="width: 1.8%;"></div>
+              </div>
+              <div class="sync-formula-note">
+                Model matematis sinkron: volume limpasan hujan terintegrasi langsung dengan kapasitas tampung prismoidal antar kontur elevasi: <i>V</i> = &sum; [ (<i>A</i><sub>1</sub> + <i>A</i><sub>2</sub>) / 2 ] &times; &Delta;<i>z</i>.
+              </div>
+            </div>
           </div>
-          <div class="sync-balance-box">
-            <div class="sync-row">
-              <span class="sync-label">Volume Hujan Masuk (V = C·I·A·t):</span>
-              <span class="sync-val" id="syncVolIn">115.355 m³</span>
-            </div>
-            <div class="sync-row">
-              <span class="sync-label">Volume Tampung Kontur Terisi:</span>
-              <span class="sync-val" id="syncVolBasin">115.355 m³</span>
-            </div>
-            <div class="sync-row">
-              <span class="sync-label">Kontur Aktif Terisi:</span>
-              <span class="sync-val" id="syncActiveContour">Kontur 1 (+0,85 m)</span>
-            </div>
-            <div class="sync-row">
-              <span class="sync-label">Kapasitas Cekungan Terisi:</span>
-              <span class="sync-val" id="syncCapPct">1,8%</span>
-            </div>
-            <div class="sync-bar">
-              <div class="sync-bar-fill" id="syncBarFill" style="width: 1.8%;"></div>
-            </div>
-            <div class="sync-formula-note">
-              Model matematis sinkron: volume limpasan hujan terintegrasi langsung dengan kapasitas tampung prismoidal antar kontur elevasi: <i>V</i> = &sum; [ (<i>A</i><sub>1</sub> + <i>A</i><sub>2</sub>) / 2 ] &times; &Delta;<i>z</i>.
-            </div>
-          </div>
-        </div>
 
-        <!-- Soil & Geotechnical -->
-        <div class="panel-section">
-          <div class="section-label">Profil Tanah & Geoteknik Zona Aktif</div>
-          <div style="font-size:11px; line-height:1.6; color:var(--ink-muted);">
-            <div style="display:flex;justify-content:space-between;"><span>Jenis Lapisan Tanah</span><span style="font-weight:600;color:var(--ink-primary);" id="geoSoil">Organosol (Gambut) + Aluvial</span></div>
-            <div style="display:flex;justify-content:space-between;margin-top:2px;"><span>Muka Air Tanah (GWL)</span><span style="font-weight:600;color:var(--ink-primary);" id="geoGWL">0,15 m (Kondisi Jenuh)</span></div>
-            <div style="display:flex;justify-content:space-between;margin-top:2px;"><span>Kondisi Drainase</span><span style="font-weight:600;color:var(--ink-primary);" id="geoDrainage">Terhambat Pasang (Backwater)</span></div>
-            <div style="display:flex;justify-content:space-between;margin-top:2px;"><span>Koefisien Limpasan (C)</span><span style="font-weight:600;color:var(--ink-primary);" id="geoRunoffC">0,85</span></div>
+          <!-- Soil & Geotechnical -->
+          <div class="panel-section">
+            <div class="section-label">
+              <span>Profil Tanah & Geoteknik</span>
+              <span class="section-tag">Karakteristik Lapisan</span>
+            </div>
+            <div class="geotech-list">
+              <div class="geotech-row"><span>Jenis Lapisan Tanah</span><span class="geotech-val" id="geoSoil">Organosol (Gambut) + Aluvial</span></div>
+              <div class="geotech-row"><span>Muka Air Tanah (GWL)</span><span class="geotech-val" id="geoGWL">0,15 m (Kondisi Jenuh)</span></div>
+              <div class="geotech-row"><span>Kondisi Drainase</span><span class="geotech-val" id="geoDrainage">Terhambat Pasang (Backwater)</span></div>
+              <div class="geotech-row"><span>Koefisien Limpasan (C)</span><span class="geotech-val" id="geoRunoffC">0,85</span></div>
+            </div>
           </div>
-        </div>
 
         </div><!-- /tab-analisis -->
 
+        <!-- Tab 3: Lapisan -->
         <div id="tab-data" class="tab-panel">
 
-        <!-- Data Source Mode Toggle -->
-        <div class="panel-section" style="background:var(--bg-subtle);">
-          <div class="section-label">
-            <span>Sumber Data Pemodelan</span>
-            <span style="font-size:9px;color:var(--water-deep);font-weight:700;">GeoJSON Riil Pontianak</span>
+          <!-- Data Source Mode Toggle -->
+          <div class="panel-section source-mode-section">
+            <div class="section-label">
+              <span>Sumber Data Pemodelan</span>
+              <span class="section-tag">Lab GeoAI</span>
+            </div>
+            <div class="mode-toggle-group">
+              <button id="btnModeReal" class="mode-toggle-btn active-mode" title="Dataset spasial genangan riil Kota Pontianak (1m-4m)">
+                Data Spasial Riil
+              </button>
+              <button id="btnModeMicro" class="mode-toggle-btn" title="Model konseptual cekungan mikro bertingkat">
+                Cekungan Mikro
+              </button>
+            </div>
+            <div id="dataSourceNotice" class="source-notice">
+              Memuat dataset GeoJSON genangan riil Kota Pontianak (1m-4m) dari laboratorium GeoAI.
+            </div>
           </div>
-          <div class="mode-toggle-group">
-            <button id="btnModeReal" class="mode-toggle-btn active-mode" title="Dataset spasial genangan riil Kota Pontianak (1m-4m)">
-              Data Spasial Riil
-            </button>
-            <button id="btnModeMicro" class="mode-toggle-btn" title="Model konseptual cekungan mikro sesuai Slide 15">
-              Cekungan Mikro (Slide 15)
-            </button>
-          </div>
-          <div id="dataSourceNotice" style="font-family:var(--font-mono);font-size:9.5px;color:var(--ink-muted);line-height:1.4;margin-top:6px;">
-            Memuat dataset GeoJSON genangan riil Kota Pontianak (1m–4m) dari laboratorium GeoAI.
-          </div>
-        </div>
 
-        <!-- Layer Controls -->
-        <div class="panel-section">
-          <div class="section-label">
-            <span>Kontrol Lapisan Spasial</span>
+          <!-- Layer Controls -->
+          <div class="panel-section">
+            <div class="section-label">
+              <span>Kontrol Lapisan Spasial</span>
+              <span class="section-tag">Visibilitas</span>
+            </div>
+            <div class="layer-list">
+              <div class="layer-item">
+                <div class="layer-left">
+                  <div class="layer-swatch-wrap"><div class="layer-swatch" style="background:#e6e0cc; border: 1px dashed #4d5b40;"></div></div>
+                  <span class="layer-title">Garis Kontur Topografi (0,4-2,9 m)</span>
+                </div>
+                <label class="switch"><input type="checkbox" id="toggleContours" checked /><span class="slider-sw"></span></label>
+              </div>
+              <div class="layer-item">
+                <div class="layer-left">
+                  <div class="layer-swatch-wrap"><div class="layer-swatch" style="background:#2563eb; opacity: 0.85;"></div></div>
+                  <span class="layer-title">Poligon Genangan Air (Hypsometrik)</span>
+                </div>
+                <label class="switch"><input type="checkbox" id="toggleFlood" checked /><span class="slider-sw"></span></label>
+              </div>
+              <div class="layer-item">
+                <div class="layer-left">
+                  <div class="layer-swatch-wrap"><div class="layer-swatch" style="background:#1e3a8a; opacity: 0.55;"></div></div>
+                  <span class="layer-title">Genangan Riil Kota (GeoJSON Lab 1-4 m)</span>
+                </div>
+                <label class="switch"><input type="checkbox" id="toggleReal" checked /><span class="slider-sw"></span></label>
+              </div>
+              <div class="layer-item">
+                <div class="layer-left">
+                  <div class="layer-swatch-wrap"><div class="layer-swatch" style="background:transparent; border-top: 3px solid #2563eb; height: 3px; width: 14px;"></div></div>
+                  <span class="layer-title">Alur Sungai Kapuas & Landak</span>
+                </div>
+                <label class="switch"><input type="checkbox" id="toggleRivers" checked /><span class="slider-sw"></span></label>
+              </div>
+              <div class="layer-item">
+                <div class="layer-left">
+                  <div class="layer-swatch-wrap"><div class="layer-swatch" style="background:transparent; border-top: 3px dashed #ea580c; height: 3px; width: 14px;"></div></div>
+                  <span class="layer-title">Jalur Aliran Air & Backwater</span>
+                </div>
+                <label class="switch"><input type="checkbox" id="toggleFlows" checked /><span class="slider-sw"></span></label>
+              </div>
+              <div class="layer-item">
+                <div class="layer-left">
+                  <div class="layer-swatch-wrap"><div class="layer-swatch" style="background:#16a34a; border-radius:50%; width: 10px; height: 10px;"></div></div>
+                  <span class="layer-title">Stasiun Sensor IoT (FloodSense)</span>
+                </div>
+                <label class="switch"><input type="checkbox" id="toggleStations" checked /><span class="slider-sw"></span></label>
+              </div>
+              <div class="layer-item">
+                <div class="layer-left">
+                  <div class="layer-swatch-wrap"><div class="layer-swatch" style="background:transparent; border-left: 2px solid #1e40af; height: 10px; width: 6px; transform: rotate(15deg);"></div></div>
+                  <span class="layer-title">Efek Visual Hujan Jatuh (Animasi)</span>
+                </div>
+                <label class="switch"><input type="checkbox" id="toggleRain" checked /><span class="slider-sw"></span></label>
+              </div>
+            </div>
           </div>
-          <div class="layer-list">
-            <div class="layer-item">
-              <div class="layer-left">
-                <div class="layer-swatch" style="background:#e6e0cc; border: 1px dashed #4d5b40;"></div>
-                <span class="layer-title">Garis Kontur Topografi (0,4–2,9 m)</span>
-              </div>
-              <label class="switch"><input type="checkbox" id="toggleContours" checked /><span class="slider-sw"></span></label>
-            </div>
-            <div class="layer-item">
-              <div class="layer-left">
-                <div class="layer-swatch" style="background:#2563eb; opacity: 0.85;"></div>
-                <span class="layer-title">Poligon Genangan Air (Hypsometrik)</span>
-              </div>
-              <label class="switch"><input type="checkbox" id="toggleFlood" checked /><span class="slider-sw"></span></label>
-            </div>
-            <div class="layer-item">
-              <div class="layer-left">
-                <div class="layer-swatch" style="background:#1e3a8a; opacity: 0.55;"></div>
-                <span class="layer-title">Genangan Riil Kota (GeoJSON Lab 1–4 m)</span>
-              </div>
-              <label class="switch"><input type="checkbox" id="toggleReal" checked /><span class="slider-sw"></span></label>
-            </div>
-            <div class="layer-item">
-              <div class="layer-left">
-                <div class="layer-swatch" style="background:transparent; border-top: 3px solid #2563eb; height: 3px; width: 14px;"></div>
-                <span class="layer-title">Alur Sungai Kapuas & Landak</span>
-              </div>
-              <label class="switch"><input type="checkbox" id="toggleRivers" checked /><span class="slider-sw"></span></label>
-            </div>
-            <div class="layer-item">
-              <div class="layer-left">
-                <div class="layer-swatch" style="background:transparent; border-top: 3px dashed #ea580c; height: 3px; width: 14px;"></div>
-                <span class="layer-title">Jalur Aliran Air & Backwater</span>
-              </div>
-              <label class="switch"><input type="checkbox" id="toggleFlows" checked /><span class="slider-sw"></span></label>
-            </div>
-            <div class="layer-item">
-              <div class="layer-left">
-                <div class="layer-swatch" style="background:#16a34a; border-radius:50%; width: 10px; height: 10px;"></div>
-                <span class="layer-title">Stasiun Sensor IoT (FloodSense)</span>
-              </div>
-              <label class="switch"><input type="checkbox" id="toggleStations" checked /><span class="slider-sw"></span></label>
-            </div>
-            <div class="layer-item">
-              <div class="layer-left">
-                <div class="layer-swatch" style="background:transparent; border-left: 2px solid #1e40af; height: 10px; width: 6px; transform: rotate(15deg);"></div>
-                <span class="layer-title">Efek Visual Hujan Jatuh (Animasi)</span>
-              </div>
-              <label class="switch"><input type="checkbox" id="toggleRain" checked /><span class="slider-sw"></span></label>
-            </div>
-          </div>
-        </div>
 
-        <!-- Assumptions Callout -->
-        <div class="panel-section">
-          <div class="callout-note">
-            <strong>Keterangan Model Hidrologi:</strong> Berdasarkan Slide 15–16 bahan kuliah Dr. Ir. Yus Sholva, S.T., M.T. Cekungan depresi terendah terisi air terlebih dahulu sebelum meluap ke kontur lebih tinggi. Volume dihitung dengan relasi V = C × I × A × t. Data geometri cekungan bersifat sintetik untuk kebutuhan simulasi spasial.
+          <!-- Academic Foundation Callout -->
+          <div class="panel-section">
+            <div class="callout-note">
+              <strong>Keterangan Model Hidrologi:</strong> Berdasarkan riset dan bahan ajar Dr. Ir. Yus Sholva, S.T., M.T. Cekungan depresi terendah terisi air terlebih dahulu sebelum meluap ke kontur lebih tinggi. Volume dihitung dengan neraca massa terverifikasi.
+            </div>
           </div>
-        </div>
 
         </div><!-- /tab-data -->
 
       </aside>
+    </div>
+  </div>
+
+  <!-- Methodology & References Modal -->
+  <div class="methodology-modal" id="methodologyModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" id="modalTitle">Metodologi & Landasan Teori</h2>
+          <span class="modal-sub">Rujukan Akademis Pemodelan Banjir Delta Kapuas</span>
+        </div>
+        <button id="btnCloseMethodology" class="modal-close" aria-label="Tutup modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <section class="modal-sec">
+          <h3>Rujukan Akademis Utama</h3>
+          <p>
+            Pemodelan simulasi ini mengadopsi bahan kajian <em>"GeoAI: Early Warning System dan Simulasi Banjir - Studi Kasus Banjir Kota Pontianak"</em> oleh <strong>Dr. Ir. Yus Sholva, S.T., M.T.</strong>, Fakultas Teknik Universitas Tanjungpura.
+          </p>
+        </section>
+
+        <section class="modal-sec">
+          <h3>Pemetaan Rujukan Slide Kuliah</h3>
+          <ul class="modal-ref-list">
+            <li><strong>Slide 8, 19-21:</strong> Protokol Tindakan & Standar Operasional Prosedur (SOP) BPBD Kota Pontianak berdasarkan ambang batas peringatan dini.</li>
+            <li><strong>Slide 10-12:</strong> Profil Melintang Topografi A-B (Sungai Kapuas → Pematang Tanggul +1,1 m → Cekungan Permukiman → Dataran Tinggi).</li>
+            <li><strong>Slide 15-16:</strong> Prinsip Cekungan Depresi Terendah (Air menggenangi zona elevasi terendah 0-0,4 m terlebih dahulu sebelum merambat ke kontur di atasnya).</li>
+            <li><strong>Slide 18:</strong> Rencana Penempatan 10 Node Stasiun Telemetri IoT FloodSense-Kalbar pada muara sungai dan titik rawan genangan.</li>
+          </ul>
+        </section>
+
+        <section class="modal-sec">
+          <h3>Formulasi Matematis & Neraca Massa</h3>
+          <div class="formula-box">
+            <div class="formula-title">1. Volume Limpasan Hujan Rasional</div>
+            <code>V = C × I × A × t</code>
+            <p>Di mana C = koefisien limpasan tanah permukaan, I = intensitas hujan (mm/jam), A = luas daerah tangkapan air (m²), t = durasi hujan (jam).</p>
+          </div>
+          <div class="formula-box">
+            <div class="formula-title">2. Kapasitas Tampungan Prismoidal Antar-Kontur</div>
+            <code>V = ∑ [ (A₁ + A₂) / 2 ] × Δz</code>
+            <p>Menghitung volume tampung kumulatif cekungan mikro bertingkat dari kontur dasar hingga elevasi muka air pasang.</p>
+          </div>
+        </section>
+      </div>
+      <div class="modal-footer">
+        <span class="modal-footer-note">Laboratorium Rekayasa Spasial & GeoAI - Kota Pontianak</span>
+        <button id="btnModalCloseOk" class="modal-btn-ok">Tutup</button>
+      </div>
     </div>
   </div>
 

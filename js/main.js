@@ -1,5 +1,5 @@
 /**
- * GeoAI Flood Simulation — Pontianak Multi-Zone Study Basins
+ * GeoAI Flood Simulation - Pontianak Multi-Zone Study Basins
  * Implementation matching Slide 15–20 of Dr. Ir. Yus Sholva's lecture.
  */
 
@@ -122,6 +122,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initRainOverlay();
   setupControls();
   setupZoneSelector();
+  initTheme();
+  setupMethodologyModal();
   selectZone(currentZone.id, false); // initial render
 });
 
@@ -139,7 +141,7 @@ function initMap() {
   L.control.scale({
     metric: true,
     imperial: false,
-    position: "bottomleft"
+    position: "bottomright"
   }).addTo(map);
 
   // Base Tiles with Cartographic Attribution
@@ -183,7 +185,7 @@ function selectZone(zoneId, fly = true) {
   const notesEl = document.getElementById("zoneNotes");
   if (notesEl) {
     notesEl.innerHTML = `
-      <span class="zone-notes-title">${currentZone.name} — ${currentZone.subtitle}</span>
+      <span class="zone-notes-title">${currentZone.name} - ${currentZone.subtitle}</span>
       ${currentZone.notes}
     `;
   }
@@ -426,7 +428,7 @@ function renderFloodPolygon(stage) {
     });
 
     floodPoly.bindTooltip(
-      `<strong>${stage.figure} — ${currentZone.name}</strong><br/>Kontur Tergenang: ${band.label}<br/>Muka Air: +${formatIdNum(stage.waterLevel, 2)} m<br/>Kedalaman: ~${formatIdNum(localDepth, 2)} m`,
+      `<strong>${stage.figure} - ${currentZone.name}</strong><br/>Kontur Tergenang: ${band.label}<br/>Muka Air: +${formatIdNum(stage.waterLevel, 2)} m<br/>Kedalaman: ~${formatIdNum(localDepth, 2)} m`,
       { sticky: true, className: "carto-tooltip" }
     );
 
@@ -566,7 +568,7 @@ const STORY_CHAPTERS = [
   {
     step: 5,
     time: "3,0 Jam (Gambar 5)",
-    title: "Puncak Banjir — Sistem Jenuh Total",
+    title: "Puncak Banjir - Sistem Jenuh Total",
     text: "Muka air ekstrem mencapai +2,85 m. Seluruh kota tergenang hingga 21.017 hektar. Status Tanggap Darurat aktif: sirene berbunyi dan perahu evakuasi dimobilisasi.",
     fly: { center: [-0.028, 109.335], zoom: 13 },
     openProfile: true
@@ -671,7 +673,7 @@ function tweenWaterLevel(targetWl, duration = 550) {
 
 // ── Cross-Section Drawer (Profil Melintang A–B) ─────────────────────────────
 const GROUND_PROFILE = [
-  // [x, z_elevasi_m] — Sungai Kapuas → Pematang → Cekungan → Dataran Tinggi
+  // [x, z_elevasi_m] - Sungai Kapuas → Pematang → Cekungan → Dataran Tinggi
   [45, 0.0], [50, -0.5], [120, 0.2], [180, 1.1], [280, 0.2],
   [380, 0.35], [460, 1.2], [560, 2.6], [585, 2.6]
 ];
@@ -852,7 +854,7 @@ async function renderRealFlood(stage) {
   const notice = document.getElementById("dataSourceNotice");
   if (notice) {
     const km2 = REAL_AREAS[tier];
-    notice.innerHTML = `Genangan riil kota aktif: layer ${tier}m — <strong>${formatIdNum(km2 * 100, 0)} ha (${formatIdNum(km2, 1)} km²)</strong>. Kontur cekungan mikro zona tetap terisi penuh sesuai Slide 15.`;
+    notice.innerHTML = `Genangan riil kota aktif: layer ${tier}m - <strong>${formatIdNum(km2 * 100, 0)} ha (${formatIdNum(km2, 1)} km²)</strong>. Kontur cekungan mikro zona tetap terisi penuh sesuai Slide 15.`;
   }
 }
 
@@ -913,7 +915,7 @@ function stageFromHours(hours) {
     hours: h,
     step: ai,
     figure: figure,
-    label: `${formatIdNum(h, 1)} Jam — ${figure}`,
+    label: `${formatIdNum(h, 1)} Jam - ${figure}`,
     description: near.description,
     maxBand: maxBand,
     rainfall_mm: rainfall,
@@ -1032,7 +1034,7 @@ function renderHours(hours) {
   if (curDurLabel) {
     const minutes = Math.round(stage.hours * 60);
     const durStr = stage.hours < 1.0 ? `${minutes} Menit` : `${formatIdNum(stage.hours, 1)} Jam (${minutes} mnt)`;
-    curDurLabel.innerText = `${durStr} — ${stage.figure}`;
+    curDurLabel.innerText = `${durStr} - ${stage.figure}`;
   }
 
   // Update EWS Tier Banner
@@ -1082,7 +1084,7 @@ function renderHours(hours) {
     `;
   }
 
-  // Update Decision Support Card (SPK — Sistem Pendukung Keputusan)
+  // Update Decision Support Card (SPK - Sistem Pendukung Keputusan)
   renderDecisionCard(stage, currentZone);
 }
 
@@ -1144,7 +1146,7 @@ function renderDecisionCard(stage, zone) {
 
   if (footerEl) {
     const zoneName = zone ? zone.name : "zona aktif";
-    footerEl.innerHTML = `${entry.footer}<br/>Zona aktif: ${zoneName} — keputusan mengikuti status simulasi terkini.`;
+    footerEl.innerHTML = `${entry.footer}<br/>Zona aktif: ${zoneName} - keputusan mengikuti status simulasi terkini.`;
   }
 }
 
@@ -1152,32 +1154,32 @@ function renderDecisionCard(stage, zone) {
 const FLOW_NARRATIONS = [
   {
     step: 0,
-    title: "Kondisi Normal — Aliran Sehat",
+    title: "Kondisi Normal - Aliran Sehat",
     text: "Limpasan hujan sisa mengalir lancar dari cekungan {zone} melalui saluran drainase menuju sungai (⇢). Belum ada tekanan pasang; muka air parit di bawah elevasi jalan."
   },
   {
     step: 1,
-    title: "Hujan Mulai — Limpasan Meningkat",
+    title: "Hujan Mulai - Limpasan Meningkat",
     text: "Curah hujan 45 mm/menambah beban parit di {zone}. Debit keluar (⇢) meningkat, namun muara mulai tertahan karena pasang laut naik (⇠)."
   },
   {
     step: 2,
-    title: "Kolisi Dimulai — Outflow vs Pasang",
+    title: "Kolisi Dimulai - Outflow vs Pasang",
     text: "Air hujan dari {zone} (⇢) bertemu pasang laut di muara parit (⇠). Selisih arus mengecil, kecepatan aliran keluar menurun, genangan mulai bertahan di titik rendah."
   },
   {
     step: 3,
-    title: "Backwater Aktif — Muara Terhambat",
+    title: "Backwater Aktif - Muara Terhambat",
     text: "Pasang puncak mendorong air laut balik ke dalam parit {zone} (⇠). Aliran keluar (⇢) nyaris berhenti; kolisi arus terjadi di sepanjang saluran primer."
   },
   {
     step: 4,
-    title: "Genangan Masif — Drainase Lumpuh",
+    title: "Genangan Masif - Drainase Lumpuh",
     text: "Kapasitas tampung {zone} meluap. Backwater (⇠) dominan, outflow (⇢) terhenti total; seluruh cekungan permukiman tergenang bersamaan."
   },
   {
     step: 5,
-    title: "Puncak Banjir — Sistem Jenuh",
+    title: "Puncak Banjir - Sistem Jenuh",
     text: "Seluruh jaringan drainase {zone} jenuh total. Tidak ada gradien aliran keluar; genangan hanya akan surut setelah pasang turun dan pompa/pintu air aktif."
   }
 ];
@@ -1214,7 +1216,7 @@ function setupControls() {
     });
   });
 
-  // Custom typed duration (manual, in minutes — 0 to 240)
+  // Custom typed duration (manual, in minutes - 0 to 240)
   const inputCustom = document.getElementById("inputCustomMinutes");
   const btnSetCustom = document.getElementById("btnSetCustom");
   const applyCustomMinutes = () => {
@@ -1338,6 +1340,9 @@ function setupLayerToggle(elementId, layerGroup) {
   });
 }
 
+const SVG_PLAY = `<svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span class="btn-text">Putar</span>`;
+const SVG_PAUSE = `<svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg><span class="btn-text">Jeda</span>`;
+
 function togglePlay() {
   if (isPlaying) {
     pause();
@@ -1349,8 +1354,10 @@ function togglePlay() {
 function play() {
   isPlaying = true;
   const btn = document.getElementById("btnPlay");
-  btn.innerHTML = `<span style="font-size:12px;">⏸</span> Jeda`;
-  btn.classList.add("active");
+  if (btn) {
+    btn.innerHTML = SVG_PAUSE;
+    btn.classList.add("is-playing");
+  }
 
   playInterval = setInterval(() => {
     if (currentHours >= 3.0) {
@@ -1365,6 +1372,63 @@ function pause() {
   isPlaying = false;
   clearInterval(playInterval);
   const btn = document.getElementById("btnPlay");
-  btn.innerHTML = `<span style="font-size:12px;">▶</span> Putar`;
-  btn.classList.remove("active");
+  if (btn) {
+    btn.innerHTML = SVG_PLAY;
+    btn.classList.remove("is-playing");
+  }
+}
+
+// Theme Toggle (Light Parchment vs Dark Slate Atlas)
+const THEME_KEY = "geoai_theme";
+const SVG_MOON = `<svg class="theme-icon-moon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg><span>Gelap</span>`;
+const SVG_SUN = `<svg class="theme-icon-sun" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg><span>Terang</span>`;
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const theme = saved || (prefersDark ? "dark" : "light");
+  setTheme(theme);
+
+  const btn = document.getElementById("btnThemeToggle");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme") || "light";
+      setTheme(current === "dark" ? "light" : "dark");
+    });
+  }
+}
+
+function setTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem(THEME_KEY, theme);
+  const btn = document.getElementById("btnThemeToggle");
+  if (btn) {
+    btn.setAttribute("aria-label", theme === "dark" ? "Ganti ke mode terang" : "Ganti ke mode gelap");
+    btn.innerHTML = theme === "dark" ? SVG_SUN : SVG_MOON;
+  }
+}
+
+// Methodology Modal
+function setupMethodologyModal() {
+  const modal = document.getElementById("methodologyModal");
+  const btnOpen = document.getElementById("btnMethodology");
+  const btnClose = document.getElementById("btnCloseMethodology");
+  const btnOk = document.getElementById("btnModalCloseOk");
+
+  if (btnOpen && modal) {
+    btnOpen.addEventListener("click", () => modal.classList.add("open"));
+  }
+  const closeModal = () => modal && modal.classList.remove("open");
+  if (btnClose) btnClose.addEventListener("click", closeModal);
+  if (btnOk) btnOk.addEventListener("click", closeModal);
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal.classList.contains("open")) {
+        closeModal();
+      }
+    });
+  }
 }
